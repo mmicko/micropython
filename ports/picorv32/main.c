@@ -15,15 +15,7 @@
 // Receive single character
 int mp_hal_stdin_rx_chr(void) {
     char c = -1;
-	uint32_t cycles_begin, cycles_now, cycles;
-	__asm__ volatile ("rdcycle %0" : "=r"(cycles_begin));
-    
 	while (c == -1) {
-		__asm__ volatile ("rdcycle %0" : "=r"(cycles_now));
-		cycles = cycles_now - cycles_begin;
-		if (cycles > 12000000) {
-			cycles_begin = cycles_now;
-		}
 		c = reg_uart_data;
 	}
     return c;
@@ -37,28 +29,6 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
 }
 
 
-void myputchar(char c)
-{
-	if (c == '\n')
-		myputchar('\r');
-	reg_uart_data = c;
-}
-
-void print(const char *p)
-{
-	while (*p)
-		myputchar(*(p++));
-} 
-
-void print_hex(uint32_t v, int digits)
-{
-	for (int i = 7; i >= 0; i--) {
-		char c = "0123456789abcdef"[(v >> (4*i)) & 15];
-		if (c == '0' && i >= digits) continue;
-		myputchar(c);
-		digits = i;
-	}
-}
 char getchar_prompt(char *prompt)
 {
 	int32_t c = -1;
@@ -67,14 +37,14 @@ char getchar_prompt(char *prompt)
 	__asm__ volatile ("rdcycle %0" : "=r"(cycles_begin));
 
 	if (prompt)
-		print(prompt);
+		printf(prompt);
 
 	while (c == -1) {
 		__asm__ volatile ("rdcycle %0" : "=r"(cycles_now));
 		cycles = cycles_now - cycles_begin;
 		if (cycles > 12000000) {
 			if (prompt)
-				print(prompt);
+				printf(prompt);
 			cycles_begin = cycles_now;
 		}
 		c = reg_uart_data;
@@ -210,7 +180,6 @@ long __mulsi3 (long a, long b)
 static char *stack_top;
 extern char *heap;
 
-
 int main(int argc, char **argv) {
     int stack_dummy;
     
@@ -220,13 +189,13 @@ int main(int argc, char **argv) {
 
 	while (getchar_prompt("Press ENTER to continue..\r\n") != '\r') { /* wait */ }
 
-	print("\n");
-	print("  ____  _          ____         ____\r\n");
-	print(" |  _ \\(_) ___ ___/ ___|  ___  / ___|\r\n");
-	print(" | |_) | |/ __/ _ \\___ \\ / _ \\| |\r\n");
-	print(" |  __/| | (_| (_) |__) | (_) | |___\r\n");
-	print(" |_|   |_|\\___\\___/____/ \\___/ \\____|\r\n");
-	print("\n");
+	printf("\n");
+	printf("  ____  _          ____         ____\r\n");
+	printf(" |  _ \\(_) ___ ___/ ___|  ___  / ___|\r\n");
+	printf(" | |_) | |/ __/ _ \\___ \\ / _ \\| |\r\n");
+	printf(" |  __/| | (_| (_) |__) | (_) | |___\r\n");
+	printf(" |_|   |_|\\___\\___/____/ \\___/ \\____|\r\n");
+	printf("\n");
 
 
     #if MICROPY_ENABLE_GC
