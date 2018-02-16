@@ -288,7 +288,7 @@ int main(int argc, char **argv) {
 
 
     #if MICROPY_ENABLE_GC
-    gc_init(heap, heap + (0x020000 - 128*1024));
+    gc_init(heap, heap + 64*1024);
     #endif
     mp_init();
     #if MICROPY_ENABLE_COMPILER
