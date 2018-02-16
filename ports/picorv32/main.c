@@ -179,14 +179,103 @@ long __mulsi3 (long a, long b)
 
 static char *stack_top;
 extern char *heap;
+extern uint32_t _sidata, _sdata, _edata, _sbss, _ebss,_ram_start;
 
 int main(int argc, char **argv) {
+	reg_uart_clkdiv = 1250;
+
+    for (uint32_t *src = &_sidata, *dest = &_sdata; dest < &_edata;) {
+        *dest++ = *src++;
+    }
+    // zero out .bss section
+    for (uint32_t *dest = &_sbss; dest < &_ebss;) {
+        *dest++ = 0;
+    }
+    reg_uart_data  = 'T';
+    reg_uart_data  = 'E';
+    reg_uart_data  = 'S';
+    reg_uart_data  = 'T';
+    reg_uart_data  = 10;
+    reg_uart_data  = 13;
+/*
+    uint32_t ptr = (uint32_t)&_sidata;
+    reg_uart_data  =((ptr >>28)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>24)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>20)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>16)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>12)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 8)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 4)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 0)& 0x0f) + 48;    
+    reg_uart_data  = 10;
+    reg_uart_data  = 13;
+
+    ptr = (uint32_t)&_sdata;
+    reg_uart_data  =((ptr >>28)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>24)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>20)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>16)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>12)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 8)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 4)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 0)& 0x0f) + 48;    
+    reg_uart_data  = 10;
+    reg_uart_data  = 13;
+
+
+
+    ptr = (uint32_t)&_sdata;
+    reg_uart_data  =((ptr >>28)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>24)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>20)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>16)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>12)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 8)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 4)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 0)& 0x0f) + 48;    
+    reg_uart_data  = 10;
+    reg_uart_data  = 13;
+
+    ptr = (uint32_t)&_edata;
+    reg_uart_data  =((ptr >>28)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>24)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>20)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>16)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>12)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 8)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 4)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 0)& 0x0f) + 48;    
+    reg_uart_data  = 10;
+    reg_uart_data  = 13;
+
+    ptr = (uint32_t)&_sbss;
+    reg_uart_data  =((ptr >>28)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>24)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>20)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>16)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>12)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 8)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 4)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 0)& 0x0f) + 48;    
+    reg_uart_data  = 10;
+    reg_uart_data  = 13;
+
+    ptr = (uint32_t)&_ebss;
+    reg_uart_data  =((ptr >>28)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>24)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>20)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>16)& 0x0f) + 48;
+    reg_uart_data  =((ptr >>12)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 8)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 4)& 0x0f) + 48;
+    reg_uart_data  =((ptr >> 0)& 0x0f) + 48;    
+    reg_uart_data  = 10;
+    reg_uart_data  = 13;
+*/
     int stack_dummy;
     
     stack_top = (char*)&stack_dummy;
-
-	reg_uart_clkdiv = 1250;
-
+    
 	while (getchar_prompt("Press ENTER to continue..\r\n") != '\r') { /* wait */ }
 
 	printf("\n");
@@ -199,7 +288,7 @@ int main(int argc, char **argv) {
 
 
     #if MICROPY_ENABLE_GC
-    gc_init(heap, heap +32*1024);
+    gc_init(heap, heap + (0x020000 - 128*1024));
     #endif
     mp_init();
     #if MICROPY_ENABLE_COMPILER

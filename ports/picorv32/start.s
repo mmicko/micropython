@@ -109,4 +109,3 @@ sb   t1, 3(t0)
 
 ret
 flashio_worker_end:
-
