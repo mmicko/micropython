@@ -14,7 +14,7 @@ INC += -I$(TOP)
 INC += -I$(BUILD)
 
 CFLAGS_RISCV = -mabi=ilp32 -march=rv32ic -ffreestanding -nostartfiles
-CFLAGS = $(INC) -Wall -Werror -std=c99 $(COPT) $(CFLAGS_RISCV) 
+CFLAGS = $(INC) -Wall -Werror -std=c99 $(COPT) $(CFLAGS_RISCV) -Os
 LDFLAGS = -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=$@.map,--cref -ffreestanding  -mabi=ilp32 -march=rv32ic 
 
 LIBS = -lm -lc -lgcc 
@@ -65,5 +65,10 @@ myclean:
 
 .PHONY: prog prog_fw clean
 
+# List of sources for qstr extraction
+SRC_QSTR += $(SRC_C) mpconfigport.h
+# Append any auto-generated sources that are needed by sources listed in
+# SRC_QSTR
+SRC_QSTR_AUTO_DEPS +=
 
 include $(TOP)/py/mkrules.mk

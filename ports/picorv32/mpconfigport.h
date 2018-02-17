@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#define MP_SSIZE_MAX (0x7fffffff)
+
 // options to control how MicroPython is built
 
 // You can disable the built-in MicroPython compiler by setting the following
@@ -15,7 +17,7 @@
 #define MICROPY_EMIT_THUMB          (0)
 #define MICROPY_EMIT_INLINE_THUMB   (0)
 #define MICROPY_COMP_MODULE_CONST   (1)
-#define MICROPY_COMP_CONST          (0)
+#define MICROPY_COMP_CONST          (1)
 #define MICROPY_COMP_DOUBLE_TUPLE_ASSIGN (1)
 #define MICROPY_COMP_TRIPLE_TUPLE_ASSIGN (0)
 #define MICROPY_COMP_RETURN_IF_EXPR (1)
@@ -47,7 +49,8 @@
 #define MICROPY_PY_BUILTINS_MIN_MAX (1)
 #define MICROPY_PY_BUILTINS_HELP            (1)
 #define MICROPY_PY_BUILTINS_HELP_MODULES    (1)
-#define MICROPY_PY___FILE__         (0)
+#define MICROPY_PY_MICROPYTHON_MEM_INFO (1)
+#define MICROPY_PY___FILE__         (1)
 #define MICROPY_PY_GC               (1)
 #define MICROPY_PY_ARRAY            (1)
 #define MICROPY_PY_ATTRTUPLE        (1)
@@ -57,6 +60,9 @@
 #define MICROPY_PY_IO               (1)
 #define MICROPY_PY_STRUCT           (1)
 #define MICROPY_PY_SYS              (1)
+#define MICROPY_PY_SYS_MAXSIZE      (1)
+#define MICROPY_PY_SYS_STDIO_BUFFER (1)
+#define MICROPY_PY_MACHINE          (1)
 #define MICROPY_CPYTHON_COMPAT      (0)
 #define MICROPY_LONGINT_IMPL        (MICROPY_LONGINT_IMPL_MPZ)
 #define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_DOUBLE)
