@@ -21,6 +21,9 @@ LIBS =
 
 SRC_C = \
 	main.c \
+	divmod.c \
+	udivmod.c \
+	udivmodsi4.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/pyexec.c \
 	lib/libc/string0.c \
@@ -38,9 +41,15 @@ $(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
 $(BUILD)/start.o: start.s
 	$(Q)$(CC) -c $(CFLAGS) -o $@ $<
 
-$(BUILD)/firmware.elf: $(OBJ) $(BUILD)/start.o sections.lds
+$(BUILD)/setjmp.o: setjmp.S
+	$(Q)$(CC) -c $(CFLAGS) -o $@ $<
+
+$(BUILD)/muldi3.o: muldi3.S
+	$(Q)$(CC) -c $(CFLAGS) -o $@ $<
+
+$(BUILD)/firmware.elf: $(OBJ) $(BUILD)/start.o $(BUILD)/muldi3.o $(BUILD)/setjmp.o sections.lds
 	$(ECHO) "LINK $@"
-	$(Q)$(CC) $(LDFLAGS) -o $@ $(BUILD)/start.o  $(OBJ)  $(LIBS)
+	$(Q)$(CC) $(LDFLAGS) -o $@ $(BUILD)/start.o $(OBJ) $(BUILD)/setjmp.o $(BUILD)/muldi3.o  $(LIBS)
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf

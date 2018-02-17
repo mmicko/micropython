@@ -81,8 +81,8 @@ typedef long mp_off_t;
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
 
-#define MICROPY_HW_BOARD_NAME "picorv32"
-#define MICROPY_HW_MCU_NAME "riscv-cpu"
+#define MICROPY_HW_BOARD_NAME "Upduino"
+#define MICROPY_HW_MCU_NAME "picorv32-cpu"
 
 #define MP_STATE_PORT MP_STATE_VM
 

@@ -68,114 +68,6 @@ void do_str(const char *src, mp_parse_input_kind_t input_kind) {
     }
 }
 
-
-void longjmp(jmp_buf __jmpb, int __retval) 
-{
-    while(1);    
-}
-
-int	setjmp(jmp_buf __jmpb)
-{
-    return 1;
-}
-
-unsigned long udivmodsi4(unsigned long num, unsigned long den, int modwanted)
-{
-  unsigned long bit = 1;
-  unsigned long res = 0;
-
-  while (den < num && bit && !(den & (1L<<31)))
-    {
-      den <<=1;
-      bit <<=1;
-    }
-  while (bit)
-    {
-      if (num >= den)
-	{
-	  num -= den;
-	  res |= bit;
-	}
-      bit >>=1;
-      den >>=1;
-    }
-  if (modwanted) return num;
-  return res;
-}
-
-long __divsi3 (long a, long b)
-{
-  int neg = 0;
-  long res;
-
-  if (a < 0)
-    {
-      a = -a;
-      neg = !neg;
-    }
-
-  if (b < 0)
-    {
-      b = -b;
-      neg = !neg;
-    }
-
-  res = udivmodsi4 (a, b, 0);
-
-  if (neg)
-    res = -res;
-
-  return res;
-}
-
-long __modsi3 (long a, long b)
-{
-  int neg = 0;
-  long res;
-
-  if (a < 0)
-    {
-      a = -a;
-      neg = 1;
-    }
-
-  if (b < 0)
-    b = -b;
-
-  res = udivmodsi4 (a, b, 1);
-
-  if (neg)
-    res = -res;
-
-  return res;
-}
-
-long __udivsi3 (long a, long b)
-{
-  return udivmodsi4 (a, b, 0);
-}
-
-long __umodsi3 (long a, long b)
-{
-  return udivmodsi4 (a, b, 1);
-}
-
-long __mulsi3 (long a, long b)
-{
-  long res = 0;
-  unsigned long cnt = a;
-  
-  while (cnt)
-    {
-      if (cnt & 1)
-	res += b;	  
-      b <<= 1;
-      cnt >>= 1;
-    }
-    
-  return res;
-}
-
 static char *stack_top;
 extern uint32_t _sidata, _sdata, _edata, _sbss, _ebss,_heap_start;
 
@@ -205,27 +97,9 @@ int main(int argc, char **argv) {
 	printf("\n");
 
 
-    #if MICROPY_ENABLE_GC
     gc_init((char*)&_heap_start , (char*)(&_heap_start) + (0x20000 - _heap_start));
-    #endif
     mp_init();
-    #if MICROPY_ENABLE_COMPILER
-    #if MICROPY_REPL_EVENT_DRIVEN
-    pyexec_event_repl_init();
-    for (;;) {
-        int c = mp_hal_stdin_rx_chr();
-        if (pyexec_event_repl_process_char(c)) {
-            break;
-        }
-    }
-    #else
     pyexec_friendly_repl();
-    #endif
-    //do_str("print('hello world!', list(x+1 for x in range(10)), end='eol\\n')", MP_PARSE_SINGLE_INPUT);
-    //do_str("for i in range(10):\r\n  print(i)", MP_PARSE_FILE_INPUT);
-    #else
-    pyexec_frozen_module("frozentest.py");
-    #endif
     mp_deinit();
     return 0;
 }
