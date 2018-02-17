@@ -178,7 +178,7 @@ long __mulsi3 (long a, long b)
 }
 
 static char *stack_top;
-extern char *heap;
+extern char *_heap;
 extern uint32_t _sidata, _sdata, _edata, _sbss, _ebss,_ram_start;
 
 int main(int argc, char **argv) {
@@ -288,7 +288,7 @@ int main(int argc, char **argv) {
 
 
     #if MICROPY_ENABLE_GC
-    gc_init(heap, heap + 64*1024);
+    gc_init(_heap+4*1024, _heap + 64*1024);
     #endif
     mp_init();
     #if MICROPY_ENABLE_COMPILER

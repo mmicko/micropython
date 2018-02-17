@@ -1,6 +1,6 @@
 MEMORY
 {
-    FLASH (rx)      : ORIGIN = 0x00100000, LENGTH = 0x400000 /* entire flash, 4 MiB */
+    FLASH (rx)      : ORIGIN = 0x00000000, LENGTH = 0x400000 /* entire flash, 4 MiB */
     RAM (xrw)       : ORIGIN = 0x00000000, LENGTH = 0x020000 /* 128 KB */
 }
 
@@ -56,6 +56,6 @@ SECTIONS {
     .heap :
     {
         . = ALIGN(4);
-        heap = .;    /* define a global symbol at heap start */
+        _heap = .;    /* define a global symbol at heap start */
     } >RAM
 }
