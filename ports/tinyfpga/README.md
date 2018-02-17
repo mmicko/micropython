@@ -1,6 +1,6 @@
-# The PicoRV32 port
+# The TinyFPGA-B2 port
 
-Port for UP5K Lattice chip Upduino, iceBreaker and similar boards.
+Port for Lattice chip based Upduino, iceBreaker and similar boards.
 
 ## Building 
 
