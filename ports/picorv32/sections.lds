@@ -56,6 +56,6 @@ SECTIONS {
     .heap :
     {
         . = ALIGN(4);
-        _heap = .;    /* define a global symbol at heap start */
+        _heap_start = .;    /* define a global symbol at heap start */
     } >RAM
 }
