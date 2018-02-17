@@ -14,6 +14,8 @@ SECTIONS {
         *(.text*)          /* .text* sections (code) */
         *(.rodata)         /* .rodata sections (constants, strings, etc.) */
         *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
+        *(.srodata)         /* .rodata sections (constants, strings, etc.) */
+        *(.srodata*)        /* .rodata* sections (constants, strings, etc.) */
         . = ALIGN(4);
         _etext = .;        /* define a global symbol at end of code */
         _sidata = _etext;  /* This is used by the startup in order to initialize the .data secion */

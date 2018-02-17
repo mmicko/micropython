@@ -15,9 +15,9 @@ INC += -I$(BUILD)
 
 CFLAGS_RISCV = -mabi=ilp32 -march=rv32ic -ffreestanding -nostartfiles
 CFLAGS = $(INC) -Wall -Werror -std=c99 $(COPT) $(CFLAGS_RISCV) 
-LDFLAGS = -lgcc -nostartfiles -lc -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=$@.map,--cref -ffreestanding  -mabi=ilp32 -march=rv32ic 
+LDFLAGS = -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=$@.map,--cref -ffreestanding  -mabi=ilp32 -march=rv32ic 
 
-LIBS =
+LIBS = -lm -lc -lgcc 
 
 SRC_C = \
 	main.c \
