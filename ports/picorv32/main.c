@@ -13,8 +13,9 @@
 #include "lib/utils/pyexec.h"
 
 // Receive single character
-int mp_hal_stdin_rx_chr(void) {
-    char c = -1;
+char mp_hal_stdin_rx_chr(void) {
+	int32_t c = -1;
+
 	while (c == -1) {
 		c = reg_uart_data;
 	}
@@ -52,7 +53,6 @@ char getchar_prompt(char *prompt)
 	return c;
 }         
 
-#if MICROPY_ENABLE_COMPILER
 void do_str(const char *src, mp_parse_input_kind_t input_kind) {
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
@@ -67,7 +67,6 @@ void do_str(const char *src, mp_parse_input_kind_t input_kind) {
         mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
     }
 }
-#endif
 
 
 void longjmp(jmp_buf __jmpb, int __retval) 
