@@ -1,0 +1,27 @@
+### left side of board
+##set_io --warn-no-port pin1_usb_dp A3
+##set_io --warn-no-port pin2_usb_dn A4
+set_io --warn-no-port clk B4
+##set_io --warn-no-port pin4 B2
+##set_io --warn-no-port pin5 A2
+##set_io --warn-no-port pin6 A1
+##set_io --warn-no-port pin7 B1
+##set_io --warn-no-port pin8 C1
+##set_io --warn-no-port pin9 D1
+##set_io --warn-no-port pin10 E1
+##set_io --warn-no-port pin11 G1
+set_io --warn-no-port ser_tx H1
+set_io --warn-no-port ser_rx J1
+
+### right side of board
+set_io --warn-no-port flash_io0 G6
+set_io --warn-no-port flash_io1 H7
+set_io --warn-no-port flash_clk G7
+set_io --warn-no-port flash_csb F7
+set_io --warn-no-port flash_io2 D9
+set_io --warn-no-port flash_io3 C9
+##set_io --warn-no-port pin20 E8
+##set_io --warn-no-port pin21 A9
+##set_io --warn-no-port pin22 A8
+##set_io --warn-no-port pin23 A7
+##set_io --warn-no-port pin24 A6
