@@ -38,7 +38,7 @@
 #define DEBUG_printf DEBUG_printf
 #else // don't print debugging info
 #define DEBUG_PRINT (0)
-#define DEBUG_printf DEBUG_printf
+#define DEBUG_printf(...) (void)0
 #endif
 
 // make this 1 to dump the heap each time it changes
