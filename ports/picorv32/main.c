@@ -2,15 +2,18 @@
 #include <stdio.h>
 #include <string.h>
 
-#define reg_uart_clkdiv (*(volatile uint32_t*)0x02000004)
-#define reg_uart_data (*(volatile uint32_t*)0x02000008)
-
 #include "py/compile.h"
 #include "py/runtime.h"
 #include "py/repl.h"
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "lib/utils/pyexec.h"
+
+#include "board.h"
+
+#define reg_uart_clkdiv (*(volatile uint32_t*)0x02000004)
+#define reg_uart_data (*(volatile uint32_t*)0x02000008)
+#define reg_leds (*(volatile uint32_t*)0x03000000)
 
 // Receive single character
 char mp_hal_stdin_rx_chr(void) {
@@ -28,7 +31,6 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
         reg_uart_data = *str++;
     }
 }
-
 
 char getchar_prompt(char *prompt)
 {
@@ -73,6 +75,7 @@ extern uint32_t _sidata, _sdata, _edata, _sbss, _ebss,_heap_start;
 
 int main(int argc, char **argv) {
 	reg_uart_clkdiv = 1250;
+    led_init();
 
     for (uint32_t *src = &_sidata, *dest = &_sdata; dest < &_edata;) {
         *dest++ = *src++;

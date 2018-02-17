@@ -21,8 +21,6 @@ module micropython (
 	output ser_tx,
 	input ser_rx,
 
-	output [1:0] leds,
-
 	output flash_csb,
 	output flash_clk,
 	inout  flash_io0,
@@ -68,7 +66,8 @@ module micropython (
 	reg  [31:0] iomem_rdata;
 
 	reg [31:0] gpio;
-	assign leds = gpio;
+	wire pwm_g, pwm_b, pwm_r;
+	assign {pwm_r,pwm_g, pwm_b } = gpio[2:0];
 
 	wire ip_ready;
 	wire [31:0] ip_rdata; 
@@ -135,7 +134,7 @@ module micropython (
 	
 	wire ip_valid = iomem_valid && (iomem_addr[31:24] == 8'h 05);
 	
-	wire pwm_g, pwm_b, pwm_r;
+	wire pwm2_g, pwm2_b, pwm2_r;
 
 	ip_wrapper_up5k ip(
 		.clock(clk),
@@ -147,7 +146,7 @@ module micropython (
 		.valid(ip_valid),
 		.ready(ip_ready),
 		
-		.pwm({pwm_r, pwm_g, pwm_b}),
+		.pwm({pwm2_r, pwm2_g, pwm2_b}),
 		
 		.i2c_sda(i2c_sda),
 		.i2c_scl(i2c_scl)
@@ -167,7 +166,7 @@ module micropython (
 
 
 	defparam RGBA_DRIVER.CURRENT_MODE = "0b1";
-	defparam RGBA_DRIVER.RGB0_CURRENT = "0b000111";
-	defparam RGBA_DRIVER.RGB1_CURRENT = "0b000111";
-	defparam RGBA_DRIVER.RGB2_CURRENT = "0b000111";
+	defparam RGBA_DRIVER.RGB0_CURRENT = "0b000001";
+	defparam RGBA_DRIVER.RGB1_CURRENT = "0b000001";
+	defparam RGBA_DRIVER.RGB2_CURRENT = "0b000001";
 endmodule

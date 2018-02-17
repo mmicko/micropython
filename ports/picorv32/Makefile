@@ -21,6 +21,9 @@ LIBS = -lm -lc -lgcc
 
 SRC_C = \
 	main.c \
+	board.c \
+	modpyb.c \
+	modpybled.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/pyexec.c \
 	lib/mp-readline/readline.c
