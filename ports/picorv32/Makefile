@@ -13,20 +13,16 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
 
-CFLAGS_RISCV = -mabi=ilp32 -march=rv32ic -ffreestanding
+CFLAGS_RISCV = -mabi=ilp32 -march=rv32ic -ffreestanding -nostartfiles
 CFLAGS = $(INC) -Wall -Werror -std=c99 $(COPT) $(CFLAGS_RISCV) 
-LDFLAGS = -lgcc  -nostdlib -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=$@.map,--cref -ffreestanding  -mabi=ilp32 -march=rv32ic 
+LDFLAGS = -lgcc -nostartfiles -lc -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=$@.map,--cref -ffreestanding  -mabi=ilp32 -march=rv32ic 
 
 LIBS =
 
 SRC_C = \
 	main.c \
-	divmod.c \
-	udivmod.c \
-	udivmodsi4.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/pyexec.c \
-	lib/libc/string0.c \
 	lib/mp-readline/readline.c
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
@@ -36,15 +32,9 @@ all: $(BUILD)/firmware.bin micropython.bin
 $(BUILD)/start.o: start.s
 	$(Q)$(CC) -c $(CFLAGS) -o $@ $<
 
-$(BUILD)/setjmp.o: setjmp.S
-	$(Q)$(CC) -c $(CFLAGS) -o $@ $<
-
-$(BUILD)/muldi3.o: muldi3.S
-	$(Q)$(CC) -c $(CFLAGS) -o $@ $<
-
-$(BUILD)/firmware.elf: $(OBJ) $(BUILD)/start.o $(BUILD)/muldi3.o $(BUILD)/setjmp.o sections.lds
+$(BUILD)/firmware.elf: $(OBJ) $(BUILD)/start.o sections.lds
 	$(ECHO) "LINK $@"
-	$(Q)$(CC) $(LDFLAGS) -o $@ $(BUILD)/start.o $(OBJ) $(BUILD)/setjmp.o $(BUILD)/muldi3.o  $(LIBS)
+	$(Q)$(CC) $(LDFLAGS) -o $@ $(BUILD)/start.o $(OBJ) $(LIBS)
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
