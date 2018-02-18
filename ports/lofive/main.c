@@ -44,7 +44,7 @@ void do_str(const char *src, mp_parse_input_kind_t input_kind) {
 }
 
 static char *stack_top;
-static char heap[2048];
+static char heap[1024*8];
 
 static const char sifive_msg[] = "\n\r\
 \n\r\
