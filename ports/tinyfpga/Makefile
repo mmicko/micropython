@@ -7,15 +7,15 @@ QSTR_DEFS = qstrdefsport.h
 
 # include py core make definitions
 include $(TOP)/py/py.mk
-CROSS_COMPILE = /opt/riscv32ic/bin/riscv32-unknown-elf-
+CROSS_COMPILE = /opt/riscv32imc/bin/riscv32-unknown-elf-
 
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
 
-CFLAGS_RISCV = -mabi=ilp32 -march=rv32ic -ffreestanding -nostartfiles
+CFLAGS_RISCV = -mabi=ilp32 -march=rv32imc -ffreestanding -nostartfiles
 CFLAGS = $(INC) -Wall -Werror -std=c99 $(COPT) $(CFLAGS_RISCV) -Os
-LDFLAGS = -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=$@.map,--cref -ffreestanding  -mabi=ilp32 -march=rv32ic 
+LDFLAGS = -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=$@.map,--cref -ffreestanding  -mabi=ilp32 -march=rv32imc 
 
 LIBS = -lm -lc -lgcc 
 
