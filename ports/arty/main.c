@@ -11,6 +11,8 @@
 #include "py/mperrno.h"
 #include "lib/utils/pyexec.h"
 
+#include "board.h"
+
 // Receive single character
 char mp_hal_stdin_rx_chr(void) {
     int32_t c = 0;
@@ -79,6 +81,8 @@ int main(int argc, char **argv) {
 
     UART0_REG(UART_REG_RXCTRL) |= UART_RXEN;
 
+    led_init();
+    
 	printf(sifive_msg);
 
     gc_init(heap, heap + sizeof(heap));
