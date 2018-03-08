@@ -91,7 +91,7 @@ typedef long mp_off_t;
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
 
-#define MICROPY_HW_BOARD_NAME "LoFive"
+#define MICROPY_HW_BOARD_NAME "Arty FPGA Dev Kit"
 #define MICROPY_HW_MCU_NAME "E310"
 
 #define MP_STATE_PORT MP_STATE_VM
