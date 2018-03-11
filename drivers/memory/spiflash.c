@@ -162,7 +162,7 @@ void mp_spiflash_init(mp_spiflash_t *self) {
     if (self->config->bus_kind == MP_SPIFLASH_BUS_SPI) {
         mp_hal_pin_write(self->config->bus.u_spi.cs, 1);
         mp_hal_pin_output(self->config->bus.u_spi.cs);
-        self->config->bus.u_spi.proto->init(self->config->bus.u_spi.data, 0, NULL, (mp_map_t*)&mp_const_empty_map);
+        self->config->bus.u_spi.proto->ioctl(self->config->bus.u_spi.data, MP_SPI_IOCTL_INIT);
     } else {
         self->config->bus.u_qspi.proto->ioctl(self->config->bus.u_qspi.data, MP_QSPI_IOCTL_INIT);
     }
@@ -181,8 +181,8 @@ void mp_spiflash_init(mp_spiflash_t *self) {
         // Set QE bit
         uint32_t data = (mp_spiflash_read_cmd(self, CMD_RDSR, 1) & 0xff)
             | (mp_spiflash_read_cmd(self, CMD_RDCR, 1) & 0xff) << 8;
-        if (!(data & (QSPI_QE_MASK << 16))) {
-            data |= QSPI_QE_MASK << 16;
+        if (!(data & (QSPI_QE_MASK << 8))) {
+            data |= QSPI_QE_MASK << 8;
             mp_spiflash_write_cmd(self, CMD_WREN);
             mp_spiflash_write_cmd_data(self, CMD_WRSR, 2, data);
             mp_spiflash_wait_wip0(self);

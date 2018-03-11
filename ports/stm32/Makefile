@@ -37,6 +37,7 @@ DEVICE=0483:df11
 STFLASH ?= st-flash
 OPENOCD ?= openocd
 OPENOCD_CONFIG ?= boards/openocd_stm32f4.cfg
+STARTUP_FILE ?= boards/startup_stm32$(MCU_SERIES).o
 
 CROSS_COMPILE = arm-none-eabi-
 
@@ -53,7 +54,7 @@ INC += -I$(USBDEV_DIR)/core/inc -I$(USBDEV_DIR)/class/inc
 CFLAGS_CORTEX_M = -mthumb
 
 # Select hardware floating-point support
-ifeq ($(CMSIS_MCU),$(filter $(CMSIS_MCU),STM32F767xx STM32F769xx))
+ifeq ($(CMSIS_MCU),$(filter $(CMSIS_MCU),STM32F767xx STM32F769xx STM32H743xx))
 CFLAGS_CORTEX_M += -mfpu=fpv5-d16 -mfloat-abi=hard
 else
 CFLAGS_CORTEX_M += -mfpu=fpv4-sp-d16 -mfloat-abi=hard
@@ -63,6 +64,7 @@ endif
 CFLAGS_MCU_f4 = $(CFLAGS_CORTEX_M) -mtune=cortex-m4 -mcpu=cortex-m4 -DMCU_SERIES_F4
 CFLAGS_MCU_f7 = $(CFLAGS_CORTEX_M) -mtune=cortex-m7 -mcpu=cortex-m7 -DMCU_SERIES_F7
 CFLAGS_MCU_l4 = $(CFLAGS_CORTEX_M) -mtune=cortex-m4 -mcpu=cortex-m4 -DMCU_SERIES_L4
+CFLAGS_MCU_h7 = $(CFLAGS_CORTEX_M) -mtune=cortex-m7 -mcpu=cortex-m7
 
 CFLAGS = $(INC) -Wall -Wpointer-arith -Werror -std=gnu99 -nostdlib $(CFLAGS_MOD) $(CFLAGS_EXTRA)
 CFLAGS += -D$(CMSIS_MCU)
@@ -185,6 +187,7 @@ EXTMOD_SRC_C = $(addprefix extmod/,\
         )
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
+	bus/softspi.c \
 	bus/softqspi.c \
 	memory/spiflash.c \
 	dht/dht.c \
@@ -247,14 +250,14 @@ SRC_C = \
 	$(wildcard boards/$(BOARD)/*.c)
 
 SRC_O = \
-	startup_stm32.o \
+	$(STARTUP_FILE) \
 	gchelper.o \
 
+$(BUILD)/$(HAL_DIR)/Src/%.o: CFLAGS += -fno-strict-aliasing
 SRC_HAL = $(addprefix $(HAL_DIR)/Src/stm32$(MCU_SERIES)xx_,\
 	hal.c \
 	hal_adc.c \
 	hal_adc_ex.c \
-	hal_can.c \
 	hal_cortex.c \
 	hal_dac.c \
 	hal_dac_ex.c \
@@ -279,6 +282,12 @@ SRC_HAL = $(addprefix $(HAL_DIR)/Src/stm32$(MCU_SERIES)xx_,\
 	ll_sdmmc.c \
 	ll_usb.c \
 	)
+
+ifeq ($(CMSIS_MCU),$(filter $(CMSIS_MCU),STM32H743xx))
+    SRC_HAL += $(addprefix $(HAL_DIR)/Src/stm32$(MCU_SERIES)xx_, hal_fdcan.c)
+else
+    SRC_HAL += $(addprefix $(HAL_DIR)/Src/stm32$(MCU_SERIES)xx_, hal_can.c)
+endif
 
 SRC_USBDEV = $(addprefix $(USBDEV_DIR)/,\
 	core/src/usbd_core.c \

@@ -23,40 +23,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_DRIVERS_MEMORY_SPIFLASH_H
-#define MICROPY_INCLUDED_DRIVERS_MEMORY_SPIFLASH_H
+#ifndef MICROPY_INCLUDED_DRIVERS_BUS_SPI_H
+#define MICROPY_INCLUDED_DRIVERS_BUS_SPI_H
 
-#include "drivers/bus/spi.h"
-#include "drivers/bus/qspi.h"
+#include "py/mphal.h"
 
 enum {
-    MP_SPIFLASH_BUS_SPI,
-    MP_SPIFLASH_BUS_QSPI,
+    MP_SPI_IOCTL_INIT,
+    MP_SPI_IOCTL_DEINIT,
 };
 
-typedef struct _mp_spiflash_config_t {
-    uint32_t bus_kind;
-    union {
-        struct {
-            mp_hal_pin_obj_t cs;
-            void *data;
-            const mp_spi_proto_t *proto;
-        } u_spi;
-        struct {
-            void *data;
-            const mp_qspi_proto_t *proto;
-        } u_qspi;
-    } bus;
-} mp_spiflash_config_t;
+typedef struct _mp_spi_proto_t {
+    int (*ioctl)(void *self, uint32_t cmd);
+    void (*transfer)(void *self, size_t len, const uint8_t *src, uint8_t *dest);
+} mp_spi_proto_t;
 
-typedef struct _mp_spiflash_t {
-    const mp_spiflash_config_t *config;
-    volatile uint32_t flags;
-} mp_spiflash_t;
+typedef struct _mp_soft_spi_obj_t {
+    uint32_t delay_half; // microsecond delay for half SCK period
+    uint8_t polarity;
+    uint8_t phase;
+    mp_hal_pin_obj_t sck;
+    mp_hal_pin_obj_t mosi;
+    mp_hal_pin_obj_t miso;
+} mp_soft_spi_obj_t;
 
-void mp_spiflash_init(mp_spiflash_t *self);
-void mp_spiflash_flush(mp_spiflash_t *self);
-void mp_spiflash_read(mp_spiflash_t *self, uint32_t addr, size_t len, uint8_t *dest);
-int mp_spiflash_write(mp_spiflash_t *self, uint32_t addr, size_t len, const uint8_t *src);
+extern const mp_spi_proto_t mp_soft_spi_proto;
 
-#endif // MICROPY_INCLUDED_DRIVERS_MEMORY_SPIFLASH_H
+int mp_soft_spi_ioctl(void *self, uint32_t cmd);
+void mp_soft_spi_transfer(void *self, size_t len, const uint8_t *src, uint8_t *dest);
+
+#endif // MICROPY_INCLUDED_DRIVERS_BUS_SPI_H
