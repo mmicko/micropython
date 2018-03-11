@@ -2,14 +2,18 @@ include ../../py/mkenv.mk
 
 FREEDOM_E_SDK ?= $(HOME)/src/freedom-e-sdk
 
-RISCV_ARCH = rv32imac 
-RISCV_ABI = ilp32 
 BSP_BASE = $(FREEDOM_E_SDK)/bsp
 BOARD ?= freedom-e300-lofive-blank
 LINK_TARGET = flash
 
 ENV_DIR = $(BSP_BASE)/env
 PLATFORM_DIR = $(ENV_DIR)/$(BOARD)
+
+# There must be a settings makefile fragment in the BSP's board directory.
+ifeq ($(wildcard $(PLATFORM_DIR)/settings.mk),)
+$(error Unable to find BSP for $(BOARD), expected to find $(PLATFORM_DIR)/settings.mk)
+endif
+include $(PLATFORM_DIR)/settings.mk
 
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = qstrdefsport.h
