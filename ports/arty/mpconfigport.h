@@ -77,10 +77,16 @@
 // to print such value. So, we avoid int32_t and use int directly.
 #define UINT_FMT "%u"
 #define INT_FMT "%d"
+
+#ifdef __LP64__
+typedef long mp_int_t; // must be pointer size
+typedef unsigned long mp_uint_t; // must be pointer size
+typedef long long mp_off_t;
+#else
 typedef int mp_int_t; // must be pointer size
 typedef unsigned mp_uint_t; // must be pointer size
-
 typedef long mp_off_t;
+#endif
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
 
@@ -97,7 +103,12 @@ extern const struct _mp_obj_module_t pyb_module;
 #include <alloca.h>
 
 #define MICROPY_HW_BOARD_NAME "Arty FPGA Dev Kit"
+
+#ifdef __LP64__
+#define MICROPY_HW_MCU_NAME "E510"
+#else
 #define MICROPY_HW_MCU_NAME "E310"
+#endif
 
 #define MP_STATE_PORT MP_STATE_VM
 
