@@ -21,6 +21,7 @@ LIBS = -lm -lc -lgcc
 
 SRC_C = \
 	main.c \
+	sections.c \
 	board.c \
 	modpyb.c \
 	modpybled.c \
@@ -41,7 +42,7 @@ $(BUILD)/firmware.elf: $(OBJ) $(BUILD)/start.o sections.lds
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
-	$(CROSS_COMPILE)objcopy  -O binary $(BUILD)/firmware.elf /dev/stdout | tail -c +1048577 > $(BUILD)/firmware.bin
+	$(CROSS_COMPILE)objcopy  -O binary $(BUILD)/firmware.elf $(BUILD)/firmware.bin
 
 # ---- iCE40 UP5k Breakout Board ----
 

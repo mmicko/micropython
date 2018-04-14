@@ -41,7 +41,15 @@ sw zero, 0(x1)
 addi x1, x1, 4
 blt x1, sp, setmemloop
 
+# Clear the bss segment
+la      a0, _sbss
+la      a2, _ebss
+sub     a2, a2, a0
+li      a1, 0
+call    memset
+
 # call main
+call executable_init_sections
 call main
 loop:
 j loop

@@ -1,6 +1,6 @@
 MEMORY
 {
-    FLASH (rx)      : ORIGIN = 0x00000000, LENGTH = 0x400000 /* entire flash, 4 MiB */
+    FLASH (rx)      : ORIGIN = 0x00100000, LENGTH = 0x400000 /* entire flash, 4 MiB */
     RAM (xrw)       : ORIGIN = 0x00000000, LENGTH = 0x020000 /* 128 KB */
 }
 
@@ -9,7 +9,6 @@ SECTIONS {
     .text :
     {
         . = ALIGN(4);
-		. = 0x100000;
         *(.text)           /* .text sections (code) */
         *(.text*)          /* .text* sections (code) */
         *(.rodata)         /* .rodata sections (constants, strings, etc.) */

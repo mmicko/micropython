@@ -71,19 +71,11 @@ void do_str(const char *src, mp_parse_input_kind_t input_kind) {
 }
 
 static char *stack_top;
-extern uint32_t _sidata, _sdata, _edata, _sbss, _ebss,_heap_start;
+extern uint32_t _heap_start;
 
 int main(int argc, char **argv) {
 	reg_uart_clkdiv = 1250;
     led_init();
-
-    for (uint32_t *src = &_sidata, *dest = &_sdata; dest < &_edata;) {
-        *dest++ = *src++;
-    }
-    // zero out .bss section
-    for (uint32_t *dest = &_sbss; dest < &_ebss;) {
-        *dest++ = 0;
-    }
 
     int stack_dummy;
     
