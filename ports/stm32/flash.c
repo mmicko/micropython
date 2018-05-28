@@ -34,7 +34,13 @@ typedef struct {
     uint32_t sector_count;
 } flash_layout_t;
 
-#if defined(MCU_SERIES_F4)
+#if defined(STM32F0)
+
+static const flash_layout_t flash_layout[] = {
+    { FLASH_BASE, FLASH_PAGE_SIZE, (FLASH_BANK1_END + 1 - FLASH_BASE) / FLASH_PAGE_SIZE },
+};
+
+#elif defined(STM32F4)
 
 static const flash_layout_t flash_layout[] = {
     { 0x08000000, 0x04000, 4 },
@@ -50,7 +56,7 @@ static const flash_layout_t flash_layout[] = {
     #endif
 };
 
-#elif defined(MCU_SERIES_F7)
+#elif defined(STM32F7)
 
 // FLASH_FLAG_PGSERR (Programming Sequence Error) was renamed to
 // FLASH_FLAG_ERSERR (Erasing Sequence Error) in STM32F7
@@ -62,7 +68,7 @@ static const flash_layout_t flash_layout[] = {
     { 0x08040000, 0x40000, 3 },
 };
 
-#elif defined(MCU_SERIES_L4)
+#elif defined(STM32L4)
 
 static const flash_layout_t flash_layout[] = {
     { (uint32_t)FLASH_BASE, (uint32_t)FLASH_PAGE_SIZE, 512 },
@@ -78,7 +84,7 @@ static const flash_layout_t flash_layout[] = {
 #error Unsupported processor
 #endif
 
-#if defined(MCU_SERIES_L4) || defined(STM32H7)
+#if defined(STM32L4) || defined(STM32H7)
 
 // get the bank of a given flash address
 static uint32_t get_bank(uint32_t addr) {
@@ -103,7 +109,7 @@ static uint32_t get_bank(uint32_t addr) {
     }
 }
 
-#if defined(MCU_SERIES_L4)
+#if defined(STM32L4)
 // get the page of a given flash address
 static uint32_t get_page(uint32_t addr) {
     if (addr < (FLASH_BASE + FLASH_BANK_SIZE)) {
@@ -142,7 +148,7 @@ uint32_t flash_get_sector_info(uint32_t addr, uint32_t *start_addr, uint32_t *si
     return 0;
 }
 
-void flash_erase(uint32_t flash_dest, const uint32_t *src, uint32_t num_word32) {
+void flash_erase(uint32_t flash_dest, uint32_t num_word32) {
     // check there is something to write
     if (num_word32 == 0) {
         return;
@@ -153,7 +159,12 @@ void flash_erase(uint32_t flash_dest, const uint32_t *src, uint32_t num_word32) 
 
     FLASH_EraseInitTypeDef EraseInitStruct;
 
-    #if defined(MCU_SERIES_L4)
+    #if defined(STM32F0)
+    __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_WRPERR | FLASH_FLAG_PGERR);
+    EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
+    EraseInitStruct.PageAddress = flash_dest;
+    EraseInitStruct.NbPages     = (4 * num_word32 + FLASH_PAGE_SIZE - 4) / FLASH_PAGE_SIZE;
+    #elif defined(STM32L4)
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_ALL_ERRORS);
 
     // erase the sector(s)
@@ -192,7 +203,7 @@ void flash_erase(uint32_t flash_dest, const uint32_t *src, uint32_t num_word32) 
 
 /*
 // erase the sector using an interrupt
-void flash_erase_it(uint32_t flash_dest, const uint32_t *src, uint32_t num_word32) {
+void flash_erase_it(uint32_t flash_dest, uint32_t num_word32) {
     // check there is something to write
     if (num_word32 == 0) {
         return;
@@ -220,7 +231,7 @@ void flash_erase_it(uint32_t flash_dest, const uint32_t *src, uint32_t num_word3
 */
 
 void flash_write(uint32_t flash_dest, const uint32_t *src, uint32_t num_word32) {
-    #if defined(MCU_SERIES_L4)
+    #if defined(STM32L4)
 
     // program the flash uint64 by uint64
     for (int i = 0; i < num_word32 / 2; i++) {

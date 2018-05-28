@@ -57,6 +57,10 @@ extern struct _spi_bdev_t spi_bdev;
 #define MICROPY_HW_SPI2_MISO    (pin_D3)
 #define MICROPY_HW_SPI2_MOSI    (pin_D4)
 
+// CAN busses
+#define MICROPY_HW_CAN1_TX (pin_B9)
+#define MICROPY_HW_CAN1_RX (pin_B8)
+
 // Joystick is pulled low. Pressing the button makes the input go high.
 #define MICROPY_HW_USRSW_PIN        (pin_A0)
 #define MICROPY_HW_USRSW_PULL       (GPIO_NOPULL)

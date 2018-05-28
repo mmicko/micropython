@@ -26,9 +26,11 @@
 
 #include "py/obj.h"
 #include "py/mperrno.h"
-#include "systick.h"
+#include "irq.h"
 #include "led.h"
 #include "storage.h"
+
+#if MICROPY_HW_ENABLE_STORAGE
 
 int32_t spi_bdev_ioctl(spi_bdev_t *bdev, uint32_t op, uint32_t arg) {
     switch (op) {
@@ -39,7 +41,7 @@ int32_t spi_bdev_ioctl(spi_bdev_t *bdev, uint32_t op, uint32_t arg) {
             return 0;
 
         case BDEV_IOCTL_IRQ_HANDLER:
-            if ((bdev->spiflash.flags & 1) && sys_tick_has_passed(bdev->flash_tick_counter_last_write, 1000)) {
+            if ((bdev->spiflash.flags & 1) && HAL_GetTick() - bdev->flash_tick_counter_last_write >= 1000) {
                 mp_spiflash_flush(&bdev->spiflash);
                 led_state(PYB_LED_RED, 0); // indicate a clean cache with LED off
             }
@@ -79,3 +81,5 @@ int spi_bdev_writeblocks(spi_bdev_t *bdev, const uint8_t *src, uint32_t block_nu
 
     return ret;
 }
+
+#endif
