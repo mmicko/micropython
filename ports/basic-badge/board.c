@@ -32,9 +32,12 @@
 // LEDs
 
 void led_state(int led, int state) {
+    set_led(led-1,state);
 }
 
 void led_toggle(int led) {
+    uint8_t val =  (get_led_word() & (1<<(led-1))) ? 0 : 1;
+    set_led(led-1,val);
 }
 
 /********************************************************************/
