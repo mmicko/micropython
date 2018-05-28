@@ -40,8 +40,8 @@
 #include "modpyb.h"
 #include "hw.h"
 
-// maximum heap for device with 8k RAM
-static char heap[4600];
+// device have 128K, so let's use 100 at least
+static char heap[100*1024];
 
 int main(int argc, char **argv) {
     // init the CPU and the peripherals
