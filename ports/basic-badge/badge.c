@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdint.h>
-
+#include "vt100.h"
 
 
 /************ Defines ****************************/
@@ -87,9 +87,9 @@ void badge_init (void)
 //housekeeping stuff. call this function often
 void loop_badge(void)
 	{
-	volatile uint16_t dbg;
+	//volatile uint16_t dbg;
 	static uint8_t brk_is_pressed;
-	dbg = PORTD;
+	//dbg = PORTD;
 	if (K_PWR==0)
 		{
 		while (K_PWR==0);
@@ -148,7 +148,7 @@ void clr_buffer (void)
 uint16_t get_free_mem(uint8_t * prog, uint16_t max_mem)
 	{
 	uint16_t prog_len;
-	prog_len = strlen(prog);
+	prog_len = strlen((char*)prog);
 	return (max_mem-prog_len);
 	}
 
@@ -171,22 +171,24 @@ uint8_t stdio_write (int8_t * data)
 		while (*data!=0x00)
 		tx_write(*data++);
 		}
+	return 0;
 	}
 
 //write one character to standard output
 uint8_t stdio_c (uint8_t data)
 	{
-	int8_t tmp[3];
+	//int8_t tmp[3];
 	if (stdio_src==STDIO_LOCAL)
 		{
-		tmp[0] = data;
-		tmp[1] = 0;
+		//tmp[0] = data;
+		//tmp[1] = 0;
 		buf_enqueue (data);
 		while (bufsize)
 			receive_char(buf_dequeue());
 		}
 	else if (stdio_src==STDIO_TTY1)
 		tx_write(data);
+	return 0;
 	}
 
 //check, whether is there something to read from standard input
@@ -199,6 +201,7 @@ int8_t stdio_get_state (void)
 		return term_k_stat();
 	else if (stdio_src==STDIO_TTY1)
 		return rx_sta();
+	return 0;
 	}
 //get character from stdio
 //zero when there is nothing to read
@@ -246,7 +249,7 @@ int8_t term_k_char (int8_t * out)
 	retval = key_buffer_ptr;
 	if (key_buffer_ptr>0)
 		{
-		strncpy(out,key_buffer,key_buffer_ptr);
+		strncpy((char*)out,(char*)key_buffer,key_buffer_ptr);
 		key_buffer_ptr = 0;
 		}
 	IEC0bits.T2IE = 1;
@@ -286,9 +289,10 @@ void stdio_local_buffer_puts (int8_t * data)
 uint16_t get_user_value (void)
 	{
 	int8_t temp_arr[20];
-	uint8_t temp_arr_p=0,char_val,stat;
+	uint8_t temp_arr_p=0,stat;
+	int8_t char_val;
 	uint32_t retval;
-	stdio_write(" :");
+	stdio_write((int8_t*)" :");
 	while (1)
 		{
 		stat = stdio_get(&char_val);
@@ -304,7 +308,7 @@ uint16_t get_user_value (void)
 	    if ((char_val==NEWLINE)&(stat!=0))
 			{
 			temp_arr[temp_arr_p] = 0;
-			sscanf(temp_arr,"%d",&retval);
+			sscanf((char*)temp_arr,"%d",&retval);
 			stdio_c('\n');
 			return retval;
 			}

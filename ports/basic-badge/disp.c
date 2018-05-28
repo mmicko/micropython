@@ -297,7 +297,7 @@ void disp_tasks (void)
 
 void tft_disp_buffer_refresh(uint8_t * buff, uint8_t * color_buff)
 	{
-	uint16_t i,j,ad,col,back,cur_x,cur_y;
+	uint16_t i,j,col,back,cur_x,cur_y;
 	cur_x = video_getx();
 	cur_y = video_gety();
 	for (i=0;i<20;i++)
@@ -315,7 +315,7 @@ void tft_disp_buffer_refresh(uint8_t * buff, uint8_t * color_buff)
 void tft_disp_buffer_refresh_part(uint8_t * buff, uint8_t * color_buff)
 	{
     static uint8_t dr_cnt=0,col,back,cur_x,cur_y;
-	uint16_t i,j,ad;
+	uint16_t i,j;
 	cur_x = video_getx();
 	cur_y = video_gety();
 	for (i=(dr_cnt);i<(dr_cnt+2);i++)
@@ -338,7 +338,7 @@ void tft_disp_buffer_refresh_part(uint8_t * buff, uint8_t * color_buff)
 
 inline void tft_print_char (uint8_t val, uint16_t x, uint16_t y, uint32_t col, uint32_t back)
 	{
-	uint16_t fl,i,j;
+	uint16_t fl,i;
 	uint16_t c1,c2,c3,b1,b2,b3;
 	c1 = (col>>16)&0xFF;
 	c2 = (col>>8)&0xFF;
@@ -407,7 +407,7 @@ inline void tft_print_char (uint8_t val, uint16_t x, uint16_t y, uint32_t col, u
 
 void tft_fill_area (uint16_t x, uint16_t y, uint16_t xlen, uint16_t ylen, uint32_t back)
 {
-    uint32_t i,j;
+    uint32_t i;
     tft_set_write_area(x,y,xlen,ylen);
     TFT_24_7789_Write_Command(0x2C);
     //FIXME: Why do I need these +1 adjustments. Off-by-one in tft_set_write_area?

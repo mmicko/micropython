@@ -27,6 +27,7 @@
 #include <xc.h>
 #include <plib.h>
 #include "board.h"
+#include "hw.h"
 
 /********************************************************************/
 // LEDs
@@ -55,8 +56,8 @@ int uart_rx_any(void) {
 }
 
 int uart_rx_char(void) {
-    uint8_t get_stat, char_out;
-	get_stat = stdio_get(&char_out);
+    int8_t char_out;
+	stdio_get(&char_out);
     return char_out;
 }
 

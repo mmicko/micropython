@@ -16,7 +16,7 @@ INC += -I$(TOP)
 INC += -I$(BUILD)
 INC += -I$(XC32)/include
 
-CFLAGS = $(INC) -D_SUPPRESS_PLIB_WARNING -Wall -Wno-unused-variable -Wno-unused-function -Wno-pointer-sign -Wno-implicit-function-declaration -Wno-unused-but-set-variable -Wno-implicit-function-declaration -Wno-return-type -Werror -std=gnu99 -nostdlib -mprocessor=$(PART) $(COPT) 
+CFLAGS = $(INC) -D_SUPPRESS_PLIB_WARNING -Wall  -Werror -std=gnu99 -nostdlib -mprocessor=$(PART) $(COPT) 
 
 #Debugging/Optimization
 ifeq ($(DEBUG), 1)

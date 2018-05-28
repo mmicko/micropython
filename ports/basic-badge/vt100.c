@@ -6,7 +6,14 @@
 #include "hw.h"
 
 #define MAX_BUF 50
-
+static void CURSOR_INVERT(void);
+static void _video_scrollup(void);
+static void _video_scrolldown(void);
+static void _video_lfwd(void);
+static void _video_cfwd(void);
+static void _video_lback(void);
+static void _video_scrollup_lin(uint8_t lin);
+static void _video_scrolldown_lin(uint8_t line);
 uint8_t msg1[50];
 
 uint8_t color_composite;
@@ -18,9 +25,9 @@ static int8_t cx;
 static int8_t cy;
 static uint8_t showcursor;
 /* parameters from setup */
-static uint8_t newlineseq;
+//static uint8_t newlineseq;
 static uint8_t process_escseqs;
-static uint8_t local_echo;
+//static uint8_t local_echo;
 /* escape sequence processing */
 static uint8_t in_esc;
 static int8_t paramstr[MAX_ESC_LEN+1];
@@ -339,7 +346,7 @@ uint8_t escseq_get_param(uint8_t defaultval)
 	val = defaultval;
 	startptr = paramptr;
 	/* get everything up to the semicolon, move past it */
-	endptr = strchr(paramptr, ';');
+	endptr = (int8_t*)strchr((char*)paramptr, ';');
 	if (endptr)
 		{
 		*endptr = '\0'; /* replace the semicolon to make atoi stop here */
@@ -351,7 +358,7 @@ uint8_t escseq_get_param(uint8_t defaultval)
 	/* ascii to integer, as long as the string isn't empty */
 	/* default value is given if the string is empty */
 	if (*startptr)
-		val = atoi(startptr); /* will read up to the null */
+		val = atoi((char*)startptr); /* will read up to the null */
 
 
 	return val;
@@ -730,7 +737,7 @@ void video_erase(uint8_t erasemode)
 
 void video_eraseline(uint8_t erasemode)
 	{
-	uint8_t y,x;
+	uint8_t x;
 	CURSOR_INVERT();
 	switch(erasemode)
 		{
@@ -782,7 +789,7 @@ void video_putsxy(int8_t x, int8_t y, int8_t *str)
 	int16_t len;
 	if (x < 0 || x >= DISP_BUFFER_WIDE) return;
 	if (y < 0 || y >= DISP_BUFFER_HIGH) return;
-	len = strlen(str);
+	len = strlen((char*)str);
 	if (len > DISP_BUFFER_WIDE-x) len = DISP_BUFFER_WIDE-x;
 	memcpy((int8_t *)(&disp_buffer[y][x]), str, len);
 	memset((int8_t *)(&color_buffer[y][x]), color_composite, len);
@@ -795,8 +802,8 @@ void video_putline(int8_t y, int8_t *str)
 	{
 	if (y < 0 || y >= DISP_BUFFER_HIGH) return;
 	/* strncpy fills unused bytes in the destination with nulls */
-	strncpy((int8_t *)(&disp_buffer[y]), str, DISP_BUFFER_WIDE);
-	memset((int8_t *)(&color_buffer[y]), color_composite, strlen(str));
+	strncpy((char *)(&disp_buffer[y]), (char*)str, DISP_BUFFER_WIDE);
+	memset((int8_t *)(&color_buffer[y]), color_composite, strlen((char*)str));
 	if (revvideo) video_invert_range(0, y, DISP_BUFFER_WIDE);
 	}
 

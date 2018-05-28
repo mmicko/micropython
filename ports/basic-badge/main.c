@@ -40,6 +40,8 @@
 #include "modpyb.h"
 #include "hw.h"
 
+extern void badge_init();
+
 // device have 128K, so let's use 100 at least
 static char heap[100*1024];
 

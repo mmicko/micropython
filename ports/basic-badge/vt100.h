@@ -129,14 +129,7 @@ void video_hide_cursor(void);
 uint8_t video_cursor_visible();
 /* Set inverse video for the character range specified. */
 void video_invert_range(int8_t x, int8_t y, uint8_t rangelen);  
-static void CURSOR_INVERT(void);
-static void _video_scrollup(void);
-static void _video_scrolldown(void);
-static void _video_lfwd(void);
-static void _video_cfwd(void);
-static void _video_lback(void);
-static void _video_scrollup_lin(uint8_t lin);
-static void _video_scrolldown_lin(uint8_t line);
+
 
 
 void term_init (void);
