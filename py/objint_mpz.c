@@ -66,7 +66,7 @@ STATIC const mpz_dig_t maxsize_dig[] = {
     #endif
 };
 // *FORMAT-ON*
-const mp_obj_int_t mp_maxsize_obj = {
+const mp_obj_int_t mp_sys_maxsize_obj = {
     {&mp_type_int},
     {.fixed_dig = 1, .len = NUM_DIG, .alloc = NUM_DIG, .dig = (mpz_dig_t *)maxsize_dig}
 };
@@ -116,7 +116,6 @@ mp_obj_t mp_obj_int_from_bytes_impl(bool big_endian, size_t len, const byte *buf
 void mp_obj_int_to_bytes_impl(mp_obj_t self_in, bool big_endian, size_t len, byte *buf) {
     assert(mp_obj_is_type(self_in, &mp_type_int));
     mp_obj_int_t *self = MP_OBJ_TO_PTR(self_in);
-    memset(buf, 0, len);
     mpz_as_bytes(&self->mpz, big_endian, len, buf);
 }
 

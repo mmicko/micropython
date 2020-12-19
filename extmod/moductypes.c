@@ -137,11 +137,7 @@ STATIC void uctypes_struct_print(const mp_print_t *print, mp_obj_t self_in, mp_p
     (void)kind;
     mp_obj_uctypes_struct_t *self = MP_OBJ_TO_PTR(self_in);
     const char *typen = "unk";
-    if (mp_obj_is_type(self->desc, &mp_type_dict)
-        #if MICROPY_PY_COLLECTIONS_ORDEREDDICT
-        || mp_obj_is_type(self->desc, &mp_type_ordereddict)
-        #endif
-        ) {
+    if (mp_obj_is_dict_or_ordereddict(self->desc)) {
         typen = "STRUCT";
     } else if (mp_obj_is_type(self->desc, &mp_type_tuple)) {
         mp_obj_tuple_t *t = MP_OBJ_TO_PTR(self->desc);
@@ -214,11 +210,7 @@ STATIC mp_uint_t uctypes_struct_agg_size(mp_obj_tuple_t *t, int layout_type, mp_
 }
 
 STATIC mp_uint_t uctypes_struct_size(mp_obj_t desc_in, int layout_type, mp_uint_t *max_field_size) {
-    if (!mp_obj_is_type(desc_in, &mp_type_dict)
-        #if MICROPY_PY_COLLECTIONS_ORDEREDDICT
-        && !mp_obj_is_type(desc_in, &mp_type_ordereddict)
-        #endif
-        ) {
+    if (!mp_obj_is_dict_or_ordereddict(desc_in)) {
         if (mp_obj_is_type(desc_in, &mp_type_tuple)) {
             return uctypes_struct_agg_size((mp_obj_tuple_t *)MP_OBJ_TO_PTR(desc_in), layout_type, max_field_size);
         } else if (mp_obj_is_small_int(desc_in)) {
@@ -407,7 +399,7 @@ STATIC void set_aligned(uint val_type, void *p, mp_int_t index, mp_obj_t val) {
                 ((uint64_t *)p)[index] = (uint64_t)v;
             } else {
                 // TODO: Doesn't offer atomic store semantics, but should at least try
-                set_unaligned(val_type, p, MP_ENDIANNESS_BIG, val);
+                set_unaligned(val_type, (void *)&((uint64_t *)p)[index], MP_ENDIANNESS_BIG, val);
             }
             return;
         default:
@@ -418,11 +410,7 @@ STATIC void set_aligned(uint val_type, void *p, mp_int_t index, mp_obj_t val) {
 STATIC mp_obj_t uctypes_struct_attr_op(mp_obj_t self_in, qstr attr, mp_obj_t set_val) {
     mp_obj_uctypes_struct_t *self = MP_OBJ_TO_PTR(self_in);
 
-    if (!mp_obj_is_type(self->desc, &mp_type_dict)
-        #if MICROPY_PY_COLLECTIONS_ORDEREDDICT
-        && !mp_obj_is_type(self->desc, &mp_type_ordereddict)
-        #endif
-        ) {
+    if (!mp_obj_is_dict_or_ordereddict(self->desc)) {
         mp_raise_TypeError(MP_ERROR_TEXT("struct: no fields"));
     }
 
@@ -518,6 +506,7 @@ STATIC mp_obj_t uctypes_struct_attr_op(mp_obj_t self_in, qstr attr, mp_obj_t set
                 return mp_obj_new_bytearray_by_ref(uctypes_struct_agg_size(sub, self->flags, &dummy), self->addr + offset);
             }
             // Fall thru to return uctypes struct object
+            MP_FALLTHROUGH
         }
         case PTR: {
             mp_obj_uctypes_struct_t *o = m_new_obj(mp_obj_uctypes_struct_t);
@@ -639,7 +628,7 @@ STATIC mp_obj_t uctypes_struct_unary_op(mp_unary_op_t op, mp_obj_t self_in) {
                     return mp_obj_new_int((mp_int_t)(uintptr_t)p);
                 }
             }
-        /* fallthru */
+            MP_FALLTHROUGH
 
         default:
             return MP_OBJ_NULL;      // op not supported

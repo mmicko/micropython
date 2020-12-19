@@ -477,7 +477,7 @@ STATIC void config_deadtime(pyb_timer_obj_t *self, mp_int_t ticks, mp_int_t brk)
     deadTimeConfig.DeadTime = compute_dtg_from_ticks(ticks);
     deadTimeConfig.BreakState = brk == BRK_OFF ? TIM_BREAK_DISABLE : TIM_BREAK_ENABLE;
     deadTimeConfig.BreakPolarity = brk == BRK_LOW ? TIM_BREAKPOLARITY_LOW : TIM_BREAKPOLARITY_HIGH;
-    #if defined(STM32F7) || defined(STM32H7) | defined(STM32L4)
+    #if defined(STM32F7) || defined(STM32H7) || defined(STM32L4) || defined(STM32WB)
     deadTimeConfig.BreakFilter = 0;
     deadTimeConfig.Break2State = TIM_BREAK_DISABLE;
     deadTimeConfig.Break2Polarity = TIM_BREAKPOLARITY_LOW;
@@ -769,14 +769,14 @@ STATIC mp_obj_t pyb_timer_init_helper(pyb_timer_obj_t *self, size_t n_args, cons
     HAL_TIM_Base_Init(&self->tim);
     #if !defined(STM32L0)
     #if defined(IS_TIM_ADVANCED_INSTANCE)
-    if (IS_TIM_ADVANCED_INSTANCE(self->tim.Instance)) {
+    if (IS_TIM_ADVANCED_INSTANCE(self->tim.Instance))
     #elif defined(IS_TIM_BREAK_INSTANCE)
-    if (IS_TIM_BREAK_INSTANCE(self->tim.Instance)) {
+    if (IS_TIM_BREAK_INSTANCE(self->tim.Instance))
     #else
-    if (0) {
-        #endif
+    if (0)
+    #endif
+    {
         config_deadtime(self, args[ARG_deadtime].u_int, args[ARG_brk].u_int);
-
     }
     #endif
 
@@ -805,7 +805,7 @@ STATIC const uint32_t tim_instance_table[MICROPY_HW_MAX_TIMER] = {
     TIM_ENTRY(1, TIM1_UP_TIM10_IRQn),
     #elif defined(STM32H7)
     TIM_ENTRY(1, TIM1_UP_IRQn),
-    #elif defined(STM32L4)
+    #elif defined(STM32L4) || defined(STM32WB)
     TIM_ENTRY(1, TIM1_UP_TIM16_IRQn),
     #endif
     #endif
@@ -820,7 +820,11 @@ STATIC const uint32_t tim_instance_table[MICROPY_HW_MAX_TIMER] = {
     TIM_ENTRY(5, TIM5_IRQn),
     #endif
     #if defined(TIM6)
+    #if defined(STM32F412Zx)
+    TIM_ENTRY(6, TIM6_IRQn),
+    #else
     TIM_ENTRY(6, TIM6_DAC_IRQn),
+    #endif
     #endif
     #if defined(TIM7)
     TIM_ENTRY(7, TIM7_IRQn),
@@ -890,6 +894,11 @@ STATIC mp_obj_t pyb_timer_make_new(const mp_obj_type_t *type, size_t n_args, siz
     // check if the timer exists
     if (tim_id <= 0 || tim_id > MICROPY_HW_MAX_TIMER || tim_instance_table[tim_id - 1] == 0) {
         mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("Timer(%d) doesn't exist"), tim_id);
+    }
+
+    // check if the timer is reserved for system use or not
+    if (MICROPY_HW_TIM_IS_RESERVED(tim_id)) {
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("Timer(%d) is reserved"), tim_id);
     }
 
     pyb_timer_obj_t *tim;

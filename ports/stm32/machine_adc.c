@@ -26,6 +26,7 @@
 
 #include "py/runtime.h"
 #include "py/mphal.h"
+#include "adc.h"
 
 #if defined(STM32F0) || defined(STM32H7) || defined(STM32L0) || defined(STM32L4) || defined(STM32WB)
 #define ADC_V2 (1)
@@ -132,8 +133,10 @@ STATIC void adc_config(ADC_TypeDef *adc, uint32_t bits) {
     #elif defined(STM32H7)
     ADC12_COMMON->CCR = 3 << ADC_CCR_CKMODE_Pos;
     ADC3_COMMON->CCR = 3 << ADC_CCR_CKMODE_Pos;
-    #elif defined(STM32L0) || defined(STM32WB)
+    #elif defined(STM32L0)
     ADC1_COMMON->CCR = 0; // ADCPR=PCLK/2
+    #elif defined(STM32WB)
+    ADC1_COMMON->CCR = 0 << ADC_CCR_PRESC_Pos | 0 << ADC_CCR_CKMODE_Pos; // PRESC=1, MODE=ASYNC
     #endif
 
     #if defined(STM32H7) || defined(STM32L4) || defined(STM32WB)
@@ -154,10 +157,16 @@ STATIC void adc_config(ADC_TypeDef *adc, uint32_t bits) {
     #endif
 
     #if ADC_V2
-    if (adc->CR == 0) {
-        // ADC hasn't been enabled so calibrate it
-        adc->CR |= ADC_CR_ADCAL;
-        while (adc->CR & ADC_CR_ADCAL) {
+    if (!(adc->CR & ADC_CR_ADEN)) {
+        // ADC isn't enabled so calibrate it now
+        #if defined(STM32F0) || defined(STM32L0)
+        LL_ADC_StartCalibration(adc);
+        #elif defined(STM32L4) || defined(STM32WB)
+        LL_ADC_StartCalibration(adc, LL_ADC_SINGLE_ENDED);
+        #else
+        LL_ADC_StartCalibration(adc, LL_ADC_CALIB_OFFSET_LINEARITY, LL_ADC_SINGLE_ENDED);
+        #endif
+        while (LL_ADC_IsCalibrationOnGoing(adc)) {
         }
     }
 
@@ -327,10 +336,15 @@ STATIC uint32_t adc_config_and_read_u16(ADC_TypeDef *adc, uint32_t channel, uint
         return 0xffff;
     }
 
+    // Select, configure and read the channel.
     adc_config_channel(adc, channel, sample_time);
     uint32_t raw = adc_read_channel(adc);
+
+    // If VBAT was sampled then deselect it to prevent battery drain.
+    adc_deselect_vbat(adc, channel);
+
+    // Scale raw reading to 16 bit value using a Taylor expansion (for bits <= 16).
     uint32_t bits = adc_get_bits(adc);
-    // Scale raw reading to 16 bit value using a Taylor expansion (for 8 <= bits <= 16)
     #if defined(STM32H7)
     if (bits < 8) {
         // For 6 and 7 bits

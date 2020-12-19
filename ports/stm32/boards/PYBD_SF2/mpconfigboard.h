@@ -77,6 +77,9 @@ void board_sleep(int value);
 // SPI flash #1, block device config
 extern const struct _mp_spiflash_config_t spiflash_config;
 extern struct _spi_bdev_t spi_bdev;
+#if !BUILDING_MBOOT
+#define MICROPY_HW_SPIFLASH_ENABLE_CACHE (1)
+#endif
 #define MICROPY_HW_BDEV_IOCTL(op, arg) ( \
     (op) == BDEV_IOCTL_NUM_BLOCKS ? (MICROPY_HW_SPIFLASH_SIZE_BITS / 8 / FLASH_BLOCK_SIZE) : \
     (op) == BDEV_IOCTL_INIT ? spi_bdev_ioctl(&spi_bdev, (op), (uint32_t)&spiflash_config) : \
@@ -188,6 +191,7 @@ extern struct _spi_bdev_t spi_bdev2;
 
 #define MBOOT_USB_AUTODETECT_PORT   (1)
 #define MBOOT_FSLOAD                (1)
+#define MBOOT_VFS_FAT               (1)
 
 #define MBOOT_I2C_PERIPH_ID         1
 #define MBOOT_I2C_SCL               (pin_B8)

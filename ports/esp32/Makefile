@@ -54,9 +54,9 @@ SDKCONFIG_COMBINED = $(BUILD)/sdkconfig.combined
 SDKCONFIG_H = $(BUILD)/sdkconfig.h
 
 # The git hash of the currently supported ESP IDF version.
-# These correspond to v3.3.2 and v4.0.
+# These correspond to v3.3.2 and v4.0.1.
 ESPIDF_SUPHASH_V3 := 9e70825d1e1cbf7988cf36981774300066580ea7
-ESPIDF_SUPHASH_V4 := 463a9d8b7f9af8205222b80707f9bdbba7c530e1
+ESPIDF_SUPHASH_V4 := 4c81978a3e2220674a432a588292a4c860eef27b
 
 define print_supported_git_hash
 $(info Supported git hash (v3.3): $(ESPIDF_SUPHASH_V3))
@@ -136,9 +136,6 @@ include $(SDKCONFIG)
 
 INC += -I.
 INC += -I$(TOP)
-INC += -I$(TOP)/lib/mp-readline
-INC += -I$(TOP)/lib/netutils
-INC += -I$(TOP)/lib/timeutils
 INC += -I$(BUILD)
 
 INC_ESPCOMP += -I$(ESPCOMP)/bootloader_support/include
@@ -271,7 +268,7 @@ CFLAGS += -DMICROPY_ESP_IDF_4=1
 endif
 
 # this is what ESPIDF uses for c++ compilation
-CXXFLAGS = -std=gnu++11 $(CFLAGS_COMMON) $(INC) $(INC_ESPCOMP)
+CXXFLAGS = -std=gnu++11 $(CFLAGS_COMMON) $(INC) $(INC_ESPCOMP) $(CXXFLAGS_MOD)
 
 LDFLAGS = -nostdlib -Map=$(@:.elf=.map) --cref
 LDFLAGS += --gc-sections -static -EL
@@ -341,7 +338,7 @@ SRC_C = \
 	modnetwork.c \
 	network_lan.c \
 	network_ppp.c \
-	nimble.c \
+	mpnimbleport.c \
 	modsocket.c \
 	modesp.c \
 	esp32_partition.c \
@@ -357,11 +354,15 @@ SRC_C = \
 	$(wildcard $(BOARD_DIR)/*.c) \
 	$(SRC_MOD)
 
+SRC_CXX += \
+	$(SRC_MOD_CXX)
+
 EXTMOD_SRC_C += $(addprefix extmod/,\
 	modonewire.c \
 	)
 
 LIB_SRC_C = $(addprefix lib/,\
+	mbedtls_errors/mp_mbedtls_errors.c \
 	mp-readline/readline.c \
 	netutils/netutils.c \
 	timeutils/timeutils.c \
@@ -378,6 +379,7 @@ DRIVERS_SRC_C = $(addprefix drivers/,\
 OBJ_MP =
 OBJ_MP += $(PY_O)
 OBJ_MP += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+OBJ_MP += $(addprefix $(BUILD)/, $(SRC_CXX:.cpp=.o))
 OBJ_MP += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ_MP += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
 OBJ_MP += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
@@ -386,7 +388,7 @@ OBJ_MP += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 $(OBJ_MP): CFLAGS += -Wdouble-promotion -Wfloat-conversion
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(EXTMOD_SRC_C) $(LIB_SRC_C) $(DRIVERS_SRC_C)
+SRC_QSTR += $(SRC_C) $(SRC_CXX) $(EXTMOD_SRC_C) $(LIB_SRC_C) $(DRIVERS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 
@@ -506,16 +508,17 @@ ESPIDF_LWIP_O = $(patsubst %.c,%.o,\
 	$(wildcard $(ESPCOMP)/lwip/port/esp32/*/*.c) \
 	)
 
-ESPIDF_MBEDTLS_O = $(patsubst %.c,%.o,\
+# Mbedtls source files, exclude error.c in favor of lib/mbedtls_errors/mp_mbedtls_errors.c
+ESPIDF_MBEDTLS_O = $(patsubst %.c,%.o, $(filter-out %/error.c,\
 	$(wildcard $(ESPCOMP)/mbedtls/mbedtls/library/*.c) \
 	$(wildcard $(ESPCOMP)/mbedtls/port/*.c) \
 	$(wildcard $(ESPCOMP)/mbedtls/port/esp32/*.c) \
-	)
+	))
 
 ESPIDF_MDNS_O = $(patsubst %.c,%.o,$(wildcard $(ESPCOMP)/mdns/*.c))
 
 ifeq ($(ESPIDF_CURHASH),$(ESPIDF_SUPHASH_V4))
-$(BUILD)/$(ESPCOMP)/wpa_supplicant/%.o: CFLAGS += -DESP_SUPPLICANT -DIEEE8021X_EAPOL -DEAP_PEER_METHOD -DEAP_TLS -DEAP_TTLS -DEAP_PEAP -DEAP_MSCHAPv2 -DUSE_WPA2_TASK -DCONFIG_WPS2 -DCONFIG_WPS_PIN -DUSE_WPS_TASK -DESPRESSIF_USE -DESP32_WORKAROUND -DCONFIG_ECC -D__ets__ -Wno-strict-aliasing -I$(ESPCOMP)/wpa_supplicant/src -Wno-implicit-function-declaration
+$(BUILD)/$(ESPCOMP)/wpa_supplicant/%.o: CFLAGS += -DCONFIG_WPA3_SAE -DCONFIG_IEEE80211W -DESP_SUPPLICANT -DIEEE8021X_EAPOL -DEAP_PEER_METHOD -DEAP_TLS -DEAP_TTLS -DEAP_PEAP -DEAP_MSCHAPv2 -DUSE_WPA2_TASK -DCONFIG_WPS2 -DCONFIG_WPS_PIN -DUSE_WPS_TASK -DESPRESSIF_USE -DESP32_WORKAROUND -DCONFIG_ECC -D__ets__ -Wno-strict-aliasing -I$(ESPCOMP)/wpa_supplicant/src -Wno-implicit-function-declaration
 else
 $(BUILD)/$(ESPCOMP)/wpa_supplicant/%.o: CFLAGS += -DEMBEDDED_SUPP -DIEEE8021X_EAPOL -DEAP_PEER_METHOD -DEAP_MSCHAPv2 -DEAP_TTLS -DEAP_TLS -DEAP_PEAP -DUSE_WPA2_TASK -DCONFIG_WPS2 -DCONFIG_WPS_PIN -DUSE_WPS_TASK -DESPRESSIF_USE -DESP32_WORKAROUND -DALLOW_EVEN_MOD -D__ets__ -Wno-strict-aliasing
 endif
@@ -555,6 +558,7 @@ ESPIDF_BT_NIMBLE_O = $(patsubst %.c,%.o,\
 	$(wildcard $(ESPCOMP)/bt/host/nimble/nimble/nimble/src/*.c) \
 	$(wildcard $(ESPCOMP)/bt/host/nimble/nimble/porting/nimble/src/*.c) \
 	$(wildcard $(ESPCOMP)/bt/host/nimble/nimble/porting/npl/freertos/src/*.c) \
+	$(wildcard $(ESPCOMP)/bt/host/nimble/port/src/*.c) \
 	)
 endif
 
@@ -780,22 +784,6 @@ $(BUILD)/application.elf: $(OBJ) $(LIB) $(BUILD)/esp32_out.ld $(BUILD)/esp32.pro
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) $(LDFLAGS) -o $@ $(APP_LD_ARGS)
 	$(Q)$(SIZE) $@
-
-define compile_cxx
-$(ECHO) "CXX $<"
-$(Q)$(CXX) $(CXXFLAGS) -c -MD -o $@ $<
-@# The following fixes the dependency file.
-@# See http://make.paulandlesley.org/autodep.html for details.
-@# Regex adjusted from the above to play better with Windows paths, etc.
-@$(CP) $(@:.o=.d) $(@:.o=.P); \
-  $(SED) -e 's/#.*//' -e 's/^.*:  *//' -e 's/ *\\$$//' \
-      -e '/^$$/ d' -e 's/$$/ :/' < $(@:.o=.d) >> $(@:.o=.P); \
-  $(RM) -f $(@:.o=.d)
-endef
-
-vpath %.cpp . $(TOP)
-$(BUILD)/%.o: %.cpp
-	$(call compile_cxx)
 
 ################################################################################
 # Declarations to build the bootloader

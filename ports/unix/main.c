@@ -133,7 +133,7 @@ STATIC int execute_from_lexer(int source_kind, const void *source, mp_parse_inpu
         // allow to print the parse tree in the coverage build
         if (mp_verbose_flag >= 3) {
             printf("----------------\n");
-            mp_parse_node_print(parse_tree.root, 0);
+            mp_parse_node_print(&mp_plat_print, parse_tree.root, 0);
             printf("----------------\n");
         }
         #endif
@@ -531,7 +531,9 @@ MP_NOINLINE int main_(int argc, char **argv) {
     #if defined(MICROPY_UNIX_COVERAGE)
     {
         MP_DECLARE_CONST_FUN_OBJ_0(extra_coverage_obj);
+        MP_DECLARE_CONST_FUN_OBJ_0(extra_cpp_coverage_obj);
         mp_store_global(QSTR_FROM_STR_STATIC("extra_coverage"), MP_OBJ_FROM_PTR(&extra_coverage_obj));
+        mp_store_global(QSTR_FROM_STR_STATIC("extra_cpp_coverage"), MP_OBJ_FROM_PTR(&extra_cpp_coverage_obj));
     }
     #endif
 
@@ -657,7 +659,7 @@ MP_NOINLINE int main_(int argc, char **argv) {
         inspect = true;
     }
     if (ret == NOTHING_EXECUTED || inspect) {
-        if (isatty(0)) {
+        if (isatty(0) || inspect) {
             prompt_read_history();
             ret = do_repl();
             prompt_write_history();

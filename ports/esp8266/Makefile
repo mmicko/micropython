@@ -50,7 +50,7 @@ INC += -I$(ESP_SDK)/include
 
 # UART for "os" messages. 0 is normal UART as used by MicroPython REPL,
 # 1 is debug UART (tx only), -1 to disable.
-UART_OS = 0
+UART_OS = -1
 
 CFLAGS_XTENSA = -fsingle-precision-constant -Wdouble-promotion \
 	-D__ets__ -DICACHE_FLASH \
@@ -93,7 +93,6 @@ SRC_C = \
 	esppwm.c \
 	espneopixel.c \
 	espapa102.c \
-	intr.c \
 	modpyb.c \
 	modmachine.c \
 	machine_pin.c \

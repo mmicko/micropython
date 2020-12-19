@@ -6,7 +6,9 @@
 
 import sys, os, time, re, select
 import argparse
+import itertools
 import subprocess
+import tempfile
 
 sys.path.append("../tools")
 import pyboard
@@ -17,6 +19,9 @@ if os.name == "nt":
 else:
     CPYTHON3 = os.getenv("MICROPY_CPYTHON3", "python3")
     MICROPYTHON = os.getenv("MICROPY_MICROPYTHON", "../ports/unix/micropython")
+
+# For diff'ing test output
+DIFF = os.getenv("MICROPY_DIFF", "diff -u")
 
 PYTHON_TRUTH = CPYTHON3
 
@@ -92,20 +97,25 @@ class PyInstance:
 
 
 class PyInstanceSubProcess(PyInstance):
-    def __init__(self, cmd):
-        self.cmd = cmd
+    def __init__(self, argv, env=None):
+        self.argv = argv
+        self.env = {n: v for n, v in (i.split("=") for i in env)} if env else None
         self.popen = None
         self.finished = True
 
     def __str__(self):
-        return self.cmd[0].rsplit("/")[-1]
+        return self.argv[0].rsplit("/")[-1]
 
     def run_script(self, script):
         output = b""
         err = None
         try:
             p = subprocess.run(
-                self.cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, input=script
+                self.argv,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                input=script,
+                env=self.env,
             )
             output = p.stdout
         except subprocess.CalledProcessError as er:
@@ -114,7 +124,11 @@ class PyInstanceSubProcess(PyInstance):
 
     def start_script(self, script):
         self.popen = subprocess.Popen(
-            self.cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            self.argv,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            env=self.env,
         )
         self.popen.stdin.write(script)
         self.popen.stdin.close()
@@ -230,6 +244,9 @@ def run_test_on_instances(test_file, num_instances, instances):
     injected_globals = ""
     output = [[] for _ in range(num_instances)]
 
+    if cmd_args.trace_output:
+        print("TRACE {}:".format("|".join(str(i) for i in instances)))
+
     # Start all instances running, in order, waiting until they signal they are ready
     for idx in range(num_instances):
         append_code = APPEND_CODE_TEMPLATE.format(injected_globals, idx)
@@ -286,7 +303,7 @@ def run_test_on_instances(test_file, num_instances, instances):
                     continue
                 num_output += 1
                 last_read_time[idx] = time.time()
-                if out is not None:
+                if out is not None and not any(m in out for m in IGNORE_OUTPUT_MATCHES):
                     trace_instance_output(idx, out)
                     output[idx].append(out)
                 if err is not None:
@@ -311,6 +328,18 @@ def run_test_on_instances(test_file, num_instances, instances):
     return error, skip, output_str
 
 
+def print_diff(a, b):
+    a_fd, a_path = tempfile.mkstemp(text=True)
+    b_fd, b_path = tempfile.mkstemp(text=True)
+    os.write(a_fd, a.encode())
+    os.write(b_fd, b.encode())
+    os.close(a_fd)
+    os.close(b_fd)
+    subprocess.run(DIFF.split(" ") + [a_path, b_path])
+    os.unlink(a_path)
+    os.unlink(b_path)
+
+
 def run_tests(test_files, instances_truth, instances_test):
     skipped_tests = []
     passed_tests = []
@@ -326,10 +355,6 @@ def run_tests(test_files, instances_truth, instances_test):
         # Run test on test instances
         error, skip, output_test = run_test_on_instances(test_file, num_instances, instances_test)
 
-        if cmd_args.show_output:
-            print("### TEST ###")
-            print(output_test, end="")
-
         if not skip:
             # Check if truth exists in a file, and read it in
             test_file_expected = test_file + ".exp"
@@ -341,7 +366,11 @@ def run_tests(test_files, instances_truth, instances_test):
                 _, _, output_truth = run_test_on_instances(
                     test_file, num_instances, instances_truth
                 )
-            if cmd_args.show_output:
+
+        if cmd_args.show_output:
+            print("### TEST ###")
+            print(output_test, end="")
+            if not skip:
                 print("### TRUTH ###")
                 print(output_truth, end="")
 
@@ -360,6 +389,8 @@ def run_tests(test_files, instances_truth, instances_test):
                 print(output_test, end="")
                 print("### TRUTH ###")
                 print(output_truth, end="")
+                print("### DIFF ###")
+                print_diff(output_truth, output_test)
 
         if cmd_args.show_output:
             print()
@@ -388,6 +419,13 @@ def main():
     cmd_parser.add_argument(
         "-i", "--instance", action="append", default=[], help="instance(s) to run the tests on"
     )
+    cmd_parser.add_argument(
+        "-p",
+        "--permutations",
+        type=int,
+        default=1,
+        help="repeat the test with this many permutations of the instance order",
+    )
     cmd_parser.add_argument("files", nargs="+", help="input test files")
     cmd_args = cmd_parser.parse_args()
 
@@ -401,23 +439,33 @@ def main():
 
     instances_test = []
     for i in cmd_args.instance:
-        if i.startswith("exec:"):
-            instances_test.append(PyInstanceSubProcess([i[len("exec:") :]]))
-        elif i == "micropython":
-            instances_test.append(PyInstanceSubProcess([MICROPYTHON]))
-        elif i == "cpython":
-            instances_test.append(PyInstanceSubProcess([CPYTHON3]))
-        elif i.startswith("pyb:"):
-            instances_test.append(PyInstancePyboard(i[len("pyb:") :]))
+        # Each instance arg is <cmd>,ENV=VAR,ENV=VAR...
+        i = i.split(",")
+        cmd = i[0]
+        env = i[1:]
+        if cmd.startswith("exec:"):
+            instances_test.append(PyInstanceSubProcess([cmd[len("exec:") :]], env))
+        elif cmd == "micropython":
+            instances_test.append(PyInstanceSubProcess([MICROPYTHON], env))
+        elif cmd == "cpython":
+            instances_test.append(PyInstanceSubProcess([CPYTHON3], env))
+        elif cmd.startswith("pyb:"):
+            instances_test.append(PyInstancePyboard(cmd[len("pyb:") :]))
         else:
-            print("unknown instance string: {}".format(i), file=sys.stderr)
+            print("unknown instance string: {}".format(cmd), file=sys.stderr)
             sys.exit(1)
 
     for _ in range(max_instances - len(instances_test)):
         instances_test.append(PyInstanceSubProcess([MICROPYTHON]))
 
+    all_pass = True
     try:
-        all_pass = run_tests(test_files, instances_truth, instances_test)
+        for i, instances_test_permutation in enumerate(itertools.permutations(instances_test)):
+            if i >= cmd_args.permutations:
+                break
+
+            all_pass &= run_tests(test_files, instances_truth, instances_test_permutation)
+
     finally:
         for i in instances_truth:
             i.close()

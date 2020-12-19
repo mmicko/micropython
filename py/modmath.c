@@ -34,6 +34,8 @@
 // M_PI is not part of the math.h standard and may not be defined
 // And by defining our own we can ensure it uses the correct const format.
 #define MP_PI MICROPY_FLOAT_CONST(3.14159265358979323846)
+#define MP_PI_4 MICROPY_FLOAT_CONST(0.78539816339744830962)
+#define MP_3_PI_4 MICROPY_FLOAT_CONST(2.35619449019234492885)
 
 STATIC NORETURN void math_error(void) {
     mp_raise_ValueError(MP_ERROR_TEXT("math domain error"));
@@ -96,7 +98,19 @@ mp_float_t MICROPY_FLOAT_C_FUN(log2)(mp_float_t x) {
 // sqrt(x): returns the square root of x
 MATH_FUN_1(sqrt, sqrt)
 // pow(x, y): returns x to the power of y
+#if MICROPY_PY_MATH_POW_FIX_NAN
+mp_float_t pow_func(mp_float_t x, mp_float_t y) {
+    // pow(base, 0) returns 1 for any base, even when base is NaN
+    // pow(+1, exponent) returns 1 for any exponent, even when exponent is NaN
+    if (x == MICROPY_FLOAT_CONST(1.0) || y == MICROPY_FLOAT_CONST(0.0)) {
+        return MICROPY_FLOAT_CONST(1.0);
+    }
+    return MICROPY_FLOAT_C_FUN(pow)(x, y);
+}
+MATH_FUN_2(pow, pow_func)
+#else
 MATH_FUN_2(pow, pow)
+#endif
 // exp(x)
 MATH_FUN_1(exp, exp)
 #if MICROPY_PY_MATH_SPECIAL_FUNCTIONS
@@ -132,7 +146,17 @@ MATH_FUN_1(asin, asin)
 // atan(x)
 MATH_FUN_1(atan, atan)
 // atan2(y, x)
+#if MICROPY_PY_MATH_ATAN2_FIX_INFNAN
+mp_float_t atan2_func(mp_float_t x, mp_float_t y) {
+    if (isinf(x) && isinf(y)) {
+        return copysign(y < 0 ? MP_3_PI_4 : MP_PI_4, x);
+    }
+    return atan2(x, y);
+}
+MATH_FUN_2(atan2, atan2_func)
+#else
 MATH_FUN_2(atan2, atan2)
+#endif
 // ceil(x)
 MATH_FUN_1_TO_INT(ceil, ceil)
 // copysign(x, y)
@@ -148,7 +172,14 @@ MATH_FUN_1(fabs, fabs_func)
 // floor(x)
 MATH_FUN_1_TO_INT(floor, floor) // TODO: delegate to x.__floor__() if x is not a float
 // fmod(x, y)
+#if MICROPY_PY_MATH_FMOD_FIX_INFNAN
+mp_float_t fmod_func(mp_float_t x, mp_float_t y) {
+    return (!isinf(x) && isinf(y)) ? x : fmod(x, y);
+}
+MATH_FUN_2(fmod, fmod_func)
+#else
 MATH_FUN_2(fmod, fmod)
+#endif
 // isfinite(x)
 MATH_FUN_1_TO_BOOL(isfinite, isfinite)
 // isinf(x)
@@ -173,17 +204,15 @@ MATH_FUN_1(lgamma, lgamma)
 
 #if MICROPY_PY_MATH_ISCLOSE
 STATIC mp_obj_t mp_math_isclose(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    enum { ARG_a, ARG_b, ARG_rel_tol, ARG_abs_tol };
+    enum { ARG_rel_tol, ARG_abs_tol };
     static const mp_arg_t allowed_args[] = {
-        {MP_QSTR_, MP_ARG_REQUIRED | MP_ARG_OBJ},
-        {MP_QSTR_, MP_ARG_REQUIRED | MP_ARG_OBJ},
         {MP_QSTR_rel_tol, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
         {MP_QSTR_abs_tol, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NEW_SMALL_INT(0)}},
     };
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
-    mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
-    const mp_float_t a = mp_obj_get_float(args[ARG_a].u_obj);
-    const mp_float_t b = mp_obj_get_float(args[ARG_b].u_obj);
+    mp_arg_parse_all(n_args - 2, pos_args + 2, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+    const mp_float_t a = mp_obj_get_float(pos_args[0]);
+    const mp_float_t b = mp_obj_get_float(pos_args[1]);
     const mp_float_t rel_tol = args[ARG_rel_tol].u_obj == MP_OBJ_NULL
         ? (mp_float_t)1e-9 : mp_obj_get_float(args[ARG_rel_tol].u_obj);
     const mp_float_t abs_tol = mp_obj_get_float(args[ARG_abs_tol].u_obj);
@@ -246,7 +275,13 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_math_frexp_obj, mp_math_frexp);
 // modf(x)
 STATIC mp_obj_t mp_math_modf(mp_obj_t x_obj) {
     mp_float_t int_part = 0.0;
-    mp_float_t fractional_part = MICROPY_FLOAT_C_FUN(modf)(mp_obj_get_float(x_obj), &int_part);
+    mp_float_t x = mp_obj_get_float(x_obj);
+    mp_float_t fractional_part = MICROPY_FLOAT_C_FUN(modf)(x, &int_part);
+    #if MICROPY_PY_MATH_MODF_FIX_NEGZERO
+    if (fractional_part == MICROPY_FLOAT_CONST(0.0)) {
+        fractional_part = copysign(fractional_part, x);
+    }
+    #endif
     mp_obj_t tuple[2];
     tuple[0] = mp_obj_new_float(fractional_part);
     tuple[1] = mp_obj_new_float(int_part);

@@ -45,14 +45,14 @@ void MICROPY_WRAP_MP_KEYBOARD_INTERRUPT(mp_keyboard_interrupt)(void) {
 
 #define IDX_MASK(i) ((i) & (MICROPY_SCHEDULER_DEPTH - 1))
 
-static inline bool mp_sched_full(void) {
+// This is a macro so it is guaranteed to be inlined in functions like
+// mp_sched_schedule that may be located in a special memory region.
+#define mp_sched_full() (mp_sched_num_pending() == MICROPY_SCHEDULER_DEPTH)
+
+static inline bool mp_sched_empty(void) {
     MP_STATIC_ASSERT(MICROPY_SCHEDULER_DEPTH <= 255); // MICROPY_SCHEDULER_DEPTH must fit in 8 bits
     MP_STATIC_ASSERT((IDX_MASK(MICROPY_SCHEDULER_DEPTH) == 0)); // MICROPY_SCHEDULER_DEPTH must be a power of 2
 
-    return mp_sched_num_pending() == MICROPY_SCHEDULER_DEPTH;
-}
-
-static inline bool mp_sched_empty(void) {
     return mp_sched_num_pending() == 0;
 }
 
@@ -120,7 +120,7 @@ void mp_sched_unlock(void) {
     MICROPY_END_ATOMIC_SECTION(atomic_state);
 }
 
-bool mp_sched_schedule(mp_obj_t function, mp_obj_t arg) {
+bool MICROPY_WRAP_MP_SCHED_SCHEDULE(mp_sched_schedule)(mp_obj_t function, mp_obj_t arg) {
     mp_uint_t atomic_state = MICROPY_BEGIN_ATOMIC_SECTION();
     bool ret;
     if (!mp_sched_full()) {

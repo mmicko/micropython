@@ -1,15 +1,17 @@
 # test setting the thread stack size
 #
 # MIT license; Copyright (c) 2016 Damien P. George on behalf of Pycom Ltd
-
-import sys
+try:
+    import usys as sys
+except ImportError:
+    import sys
 import _thread
 
 # different implementations have different minimum sizes
 if sys.implementation.name == "micropython":
     sz = 2 * 1024
 else:
-    sz = 32 * 1024
+    sz = 512 * 1024
 
 
 def foo():
